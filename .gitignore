@@ -1,0 +1,55 @@
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+dist/
+build/
+tmp/
+temp/
+
+# Coverage reports
+coverage/
+*.lcov
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor settings
+.vscode/
+.idea/
+*.swp
+
+# OS files
+*.bak
+*.tmp
+
+# Optional: If you use TypeScript
+*.tsbuildinfo
+
+# Optional: If you use PM2
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Optional: If you use Prisma
+prisma/migrations/
+
+# Optional: If you use Next.js
+.next/
+out/

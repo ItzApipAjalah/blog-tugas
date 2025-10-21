@@ -1,0 +1,20 @@
+{
+  "name": "blog",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.x.x",
+    "dotenv": "^16.x.x",
+    "ejs": "^3.x.x",
+    "express": "^4.x.x",
+    "express-session": "^1.x.x",
+    "multer": "^1.x.x"
+  },
+  "devDependencies": {
+    "nodemon": "^2.x.x"
+  }
+}

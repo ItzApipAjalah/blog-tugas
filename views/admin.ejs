@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Admin Dashboard</h1>
+    
+    <!-- Create New Post Form -->
+    <h2>Create New Blog Post</h2>
+    <form action="/admin/blog" method="POST" enctype="multipart/form-data">
+      <div class="form-group">
+        <label>Title:</label>
+        <input type="text" name="title" required>
+      </div>
+      <div class="form-group">
+        <label>Description:</label>
+        <textarea name="description" required></textarea>
+      </div>
+      <div class="form-group">
+        <label>Attachment:</label>
+        <input type="file" name="file">
+      </div>
+      <button type="submit">Create Post</button>
+    </form>
+
+    <!-- List of Existing Posts -->
+    <h2>Existing Posts</h2>
+    <div class="blog-list">
+      <% if (blogs && blogs.length > 0) { %>
+        <% blogs.forEach(blog => { %>
+          <div class="blog-item">
+            <h3><%= blog.title %></h3>
+            <div class="blog-actions">
+              <a href="/admin/edit/<%= blog.id %>" class="btn">Edit</a>
+              <form action="/admin/delete/<%= blog.id %>" method="POST" class="inline-form">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+              </form>
+            </div>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <p>No blog posts available.</p>
+      <% } %>
+    </div>
+
+    <a href="/logout" class="btn">Logout</a>
+  </div>
+</body>
+</html>
