@@ -39,23 +39,18 @@
             <% } else if (isPDF) { %>
               <!-- PDF Preview -->
               <div class="mb-4 w-full">
-                <% if (!isAndroid) { %>
-                  <div class="relative w-full overflow-hidden" style="padding-top: 141.4%;">
-                    <iframe 
-                      src="<%= fileUrl %>#toolbar=0&navpanes=0"
-                      class="absolute top-0 left-0 w-full h-full rounded-lg shadow-md"
-                      style="-webkit-overflow-scrolling: touch;"
-                      frameborder="0"
-                      allowfullscreen
-                    ></iframe>
-                  </div>
-                <% } %>
+                <div class="relative w-full overflow-hidden" style="padding-top: 141.4%;">
+                  <iframe 
+                    src="<%= fileUrl %>"
+                    type="application/pdf"
+                    class="absolute top-0 left-0 w-full h-full rounded-lg shadow-md"
+                    style="-webkit-overflow-scrolling: touch;"
+                    frameborder="0"
+                    allowfullscreen
+                  ></iframe>
+                </div>
                 <div class="mt-4 text-sm text-gray-500">
-                  <% if (isAndroid) { %>
-                    PDF preview tidak tersedia untuk perangkat Android. Silakan gunakan tombol "Open PDF" di bawah untuk membuka file.
-                  <% } else { %>
-                    Untuk pengalaman yang lebih baik dalam membaca PDF, silahkan gunakan tombol "Open PDF" di bawah.
-                  <% } %>
+                  Untuk pengalaman yang lebih baik dalam membaca PDF, silahkan gunakan tombol "Open PDF" di bawah.
                 </div>
               </div>
             <% } %>
