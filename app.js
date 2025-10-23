@@ -15,6 +15,16 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
+// Slug generator function
+function generateSlug(title) {
+  return title
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with -
+    .replace(/-+/g, '-') // Replace multiple - with single -
+    .trim();
+}
+
 // Middleware
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
@@ -54,12 +64,12 @@ app.get('/', async (req, res) => {
   }
 });
 
-app.get('/blog/:id', async (req, res) => {
+app.get('/blog/:slug', async (req, res) => {
   try {
     const { data: blog, error } = await supabase
       .from('blogs')
       .select('*')
-      .eq('id', req.params.id)
+      .eq('slug', req.params.slug)
       .single();
 
     if (error || !blog) {
@@ -109,25 +119,19 @@ app.get('/admin', requireAuth, async (req, res) => {
 });
 
 // Edit blog page
-app.get('/admin/edit/:id', requireAuth, async (req, res) => {
+app.get('/admin/edit/:slug', requireAuth, async (req, res) => {
   try {
     const { data: blog, error } = await supabase
       .from('blogs')
       .select('*')
-      .eq('id', req.params.id)
+      .eq('slug', req.params.slug)
       .single();
 
-    if (error) {
-      console.error('Error fetching blog:', error);
+    if (error || !blog) {
+      console.error('Blog not found or error:', error);
       return res.redirect('/admin');
     }
 
-    if (!blog) {
-      console.error('Blog not found');
-      return res.redirect('/admin');
-    }
-
-    console.log('Blog data:', blog); // Debug log
     res.render('edit', { blog });
   } catch (err) {
     console.error('Server error:', err);
@@ -136,17 +140,29 @@ app.get('/admin/edit/:id', requireAuth, async (req, res) => {
 });
 
 // Update blog post
-app.post('/admin/edit/:id', requireAuth, upload.single('file'), async (req, res) => {
+app.post('/admin/edit/:slug', requireAuth, upload.single('file'), async (req, res) => {
   try {
     const { title, description, remove_file } = req.body;
-    const file = req.file;
-    const blogId = req.params.id;
+    const oldSlug = req.params.slug;
+    let newSlug = generateSlug(title);
+    
+    // Check if new slug would conflict (excluding current post)
+    const { data: existingPost } = await supabase
+      .from('blogs')
+      .select('id')
+      .eq('slug', newSlug)
+      .neq('slug', oldSlug)
+      .single();
+
+    if (existingPost) {
+      newSlug = `${newSlug}-${Date.now()}`;
+    }
 
     // Get current blog data
     const { data: currentBlog } = await supabase
       .from('blogs')
       .select('file_url')
-      .eq('id', blogId)
+      .eq('slug', oldSlug)
       .single();
 
     let fileUrl = currentBlog.file_url;
@@ -161,7 +177,7 @@ app.post('/admin/edit/:id', requireAuth, upload.single('file'), async (req, res)
     }
 
     // Handle new file upload
-    if (file) {
+    if (req.file) {
       // Remove old file if exists
       if (fileUrl) {
         const oldFileName = fileUrl.split('/').pop();
@@ -171,11 +187,11 @@ app.post('/admin/edit/:id', requireAuth, upload.single('file'), async (req, res)
       }
 
       // Upload new file
-      const filename = Date.now() + path.extname(file.originalname);
+      const filename = Date.now() + path.extname(req.file.originalname);
       const { error: uploadError } = await supabase.storage
         .from('blog-files')
-        .upload(filename, file.buffer, {
-          contentType: file.mimetype,
+        .upload(filename, req.file.buffer, {
+          contentType: req.file.mimetype,
           cacheControl: '3600'
         });
 
@@ -191,8 +207,13 @@ app.post('/admin/edit/:id', requireAuth, upload.single('file'), async (req, res)
     // Update blog post
     const { error: updateError } = await supabase
       .from('blogs')
-      .update({ title, description, file_url: fileUrl })
-      .eq('id', blogId);
+      .update({ 
+        title, 
+        description, 
+        file_url: fileUrl,
+        slug: newSlug 
+      })
+      .eq('slug', oldSlug);
 
     if (updateError) throw updateError;
     res.redirect('/admin');
@@ -203,15 +224,15 @@ app.post('/admin/edit/:id', requireAuth, upload.single('file'), async (req, res)
 });
 
 // Delete blog post
-app.post('/admin/delete/:id', requireAuth, async (req, res) => {
+app.post('/admin/delete/:slug', requireAuth, async (req, res) => {
   try {
-    const blogId = req.params.id;
+    const slug = req.params.slug;
 
     // Get blog data to check for file
     const { data: blog } = await supabase
       .from('blogs')
       .select('file_url')
-      .eq('id', blogId)
+      .eq('slug', slug)
       .single();
 
     // Delete file if exists
@@ -226,7 +247,7 @@ app.post('/admin/delete/:id', requireAuth, async (req, res) => {
     const { error: deleteError } = await supabase
       .from('blogs')
       .delete()
-      .eq('id', blogId);
+      .eq('slug', slug);
 
     if (deleteError) throw deleteError;
     res.redirect('/admin');
@@ -239,17 +260,37 @@ app.post('/admin/delete/:id', requireAuth, async (req, res) => {
 app.post('/admin/blog', requireAuth, upload.single('file'), async (req, res) => {
   try {
     const { title, description } = req.body;
-    const file = req.file;
+    let slug = generateSlug(title);
+    
+    // Check if slug exists and append number if needed
+    let slugExists = true;
+    let counter = 1;
+    let finalSlug = slug;
+    
+    while (slugExists) {
+      const { data, error } = await supabase
+        .from('blogs')
+        .select('slug')
+        .eq('slug', finalSlug)
+        .single();
+
+      if (!data) {
+        slugExists = false;
+      } else {
+        finalSlug = `${slug}-${counter}`;
+        counter++;
+      }
+    }
 
     let fileUrl = null;
-    if (file) {
-      const filename = Date.now() + path.extname(file.originalname);
+    if (req.file) {
+      const filename = Date.now() + path.extname(req.file.originalname);
       
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('blog-files')
-        .upload(filename, file.buffer, {
-          contentType: file.mimetype,
+        .upload(filename, req.file.buffer, {
+          contentType: req.file.mimetype,
           cacheControl: '3600'
         });
 
@@ -263,10 +304,15 @@ app.post('/admin/blog', requireAuth, upload.single('file'), async (req, res) => 
       fileUrl = publicUrl;
     }
 
-    // Insert blog post with file URL
+    // Insert blog post with slug
     const { error: insertError } = await supabase
       .from('blogs')
-      .insert([{ title, description, file_url: fileUrl }]);
+      .insert([{ 
+        title, 
+        description, 
+        file_url: fileUrl,
+        slug: finalSlug 
+      }]);
 
     if (insertError) throw insertError;
     res.redirect('/');

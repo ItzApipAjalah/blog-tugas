@@ -1,41 +1,124 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Edit Blog Post</title>
-  <link rel="stylesheet" href="/styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <div class="container">
-    <h1>Edit Blog Post</h1>
-    <form action="/admin/edit/<%= blog.id %>" method="POST" enctype="multipart/form-data">
-      <div class="form-group">
-        <label>Title:</label>
-        <input type="text" name="title" value="<%= blog.title %>" required>
-      </div>
-      <div class="form-group">
-        <label>Description:</label>
-        <textarea name="description" required><%= blog.description %></textarea>
-      </div>
-      <div class="form-group">
-        <label>Current File:</label>
-        <% if (blog.file_url) { %>
-          <div class="current-file">
-            <a href="<%= blog.file_url %>" target="_blank">View Current File</a>
-            <label>
-              <input type="checkbox" name="remove_file"> Remove file
-            </label>
-          </div>
-        <% } else { %>
-          <p>No file attached</p>
-        <% } %>
-      </div>
-      <div class="form-group">
-        <label>New Attachment:</label>
-        <input type="file" name="file">
-      </div>
-      <button type="submit">Update Post</button>
-      <a href="/admin" class="btn">Cancel</a>
-    </form>
+<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+  <div class="container mx-auto px-4 py-8 max-w-4xl">
+    <!-- Header -->
+    <div class="mb-8">
+      <a href="/admin" class="inline-flex items-center text-slate-600 hover:text-slate-800 transition-colors duration-200 mb-4">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+        Back to Dashboard
+      </a>
+      <h1 class="text-4xl font-bold text-slate-800 mb-2">Edit Blog Post</h1>
+      <p class="text-slate-600">Update your blog post details</p>
+    </div>
+
+    <!-- Edit Form -->
+    <div class="bg-white rounded-xl shadow-lg p-8 border border-slate-200">
+      <form action="/admin/edit/<%= blog.slug %>" method="POST" enctype="multipart/form-data" class="space-y-6">
+        <!-- Title Field -->
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Title</label>
+          <input 
+            type="text" 
+            name="title" 
+            value="<%= blog.title %>" 
+            required 
+            class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none"
+            placeholder="Enter post title"
+          >
+        </div>
+
+        <!-- Description Field -->
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Description</label>
+          <textarea 
+            name="description" 
+            required 
+            rows="6"
+            class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none resize-none"
+            placeholder="Enter post description"
+          ><%= blog.description %></textarea>
+        </div>
+
+        <!-- Current File Section -->
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-3">Current File</label>
+          <% if (blog.file_url) { %>
+            <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center">
+                  <svg class="w-5 h-5 text-slate-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                  <span class="text-slate-700 font-medium">File attached</span>
+                </div>
+                <a 
+                  href="<%= blog.file_url %>" 
+                  target="_blank" 
+                  class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                >
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                  </svg>
+                  View Current File
+                </a>
+              </div>
+              <label class="flex items-center cursor-pointer group">
+                <input 
+                  type="checkbox" 
+                  name="remove_file" 
+                  class="w-4 h-4 text-red-600 border-slate-300 rounded focus:ring-2 focus:ring-red-500 cursor-pointer"
+                >
+                <span class="ml-2 text-sm text-slate-600 group-hover:text-red-600 transition-colors duration-200">Remove this file</span>
+              </label>
+            </div>
+          <% } else { %>
+            <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 text-center">
+              <svg class="w-12 h-12 mx-auto text-slate-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+              </svg>
+              <p class="text-slate-500">No file attached</p>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- New Attachment Field -->
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">New Attachment</label>
+          <input 
+            type="file" 
+            name="file"
+            class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:cursor-pointer"
+          >
+          <p class="text-sm text-slate-500 mt-2">Upload a new file to replace the current one</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-4 pt-4">
+          <button 
+            type="submit" 
+            class="flex-1 px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+          >
+            Update Post
+          </button>
+          <a 
+            href="/admin" 
+            class="flex-1 px-6 py-3 bg-slate-200 text-slate-700 font-medium rounded-lg hover:bg-slate-300 transition-colors duration-200 text-center"
+          >
+            Cancel
+          </a>
+        </div>
+      </form>
+    </div>
   </div>
 </body>
 </html>

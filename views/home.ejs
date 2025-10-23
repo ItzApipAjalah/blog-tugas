@@ -20,7 +20,7 @@
     <% if (blogs && blogs.length > 0) { %>
       <div class="grid gap-6">
         <% blogs.forEach(blog => { %>
-          <a href="/blog/<%= blog.id %>" class="block group">
+          <a href="/blog/<%= blog.slug %>" class="block group">
             <div class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 p-6 border border-gray-100">
               <div class="flex justify-between items-start">
                 <div class="flex-1">
