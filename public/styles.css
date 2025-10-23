@@ -48,3 +48,37 @@ button {
 .file-download {
   margin: 20px 0;
 }
+
+.blog-list {
+  margin: 20px 0;
+}
+
+.blog-item {
+  border: 1px solid #ddd;
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.blog-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.inline-form {
+  display: inline;
+}
+
+.btn-danger {
+  background: #dc3545;
+}
+
+.current-file {
+  margin: 10px 0;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 4px;
+}
