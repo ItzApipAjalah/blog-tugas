@@ -24,6 +24,7 @@
               const fileExt = fileUrl.split('.').pop().toLowerCase();
               const isPDF = fileExt === 'pdf';
               const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt);
+              const isAndroid = /Android/i.test(userAgent); 
             %>
 
             <% if (isImage) { %>
@@ -36,21 +37,25 @@
                 >
               </div>
             <% } else if (isPDF) { %>
-              <!-- PDF Preview with iOS support -->
+              <!-- PDF Preview -->
               <div class="mb-4 w-full">
-                <!-- Change padding-top to 141.4% (A4 aspect ratio) for mobile and adjust height with media queries -->
-                <div class="relative" style="padding-top: 141.4%;">
-                  <iframe 
-                    src="<%= fileUrl %>#toolbar=0&navpanes=0"
-                    class="absolute top-0 left-0 w-full h-full rounded-lg shadow-md min-h-[600px] sm:min-h-[800px] md:min-h-[1000px]"
-                    style="-webkit-overflow-scrolling: touch;"
-                    frameborder="0"
-                    allowfullscreen
-                  ></iframe>
-                </div>
+                <% if (!isAndroid) { %>
+                  <div class="relative w-full overflow-hidden" style="padding-top: 141.4%;">
+                    <iframe 
+                      src="<%= fileUrl %>#toolbar=0&navpanes=0"
+                      class="absolute top-0 left-0 w-full h-full rounded-lg shadow-md"
+                      style="-webkit-overflow-scrolling: touch;"
+                      frameborder="0"
+                      allowfullscreen
+                    ></iframe>
+                  </div>
+                <% } %>
                 <div class="mt-4 text-sm text-gray-500">
-                  Note: Untuk pengalaman yang lebih baik dalam membaca PDF di mobile,
-                  silahkan gunakan tombol "Open PDF" di bawah.
+                  <% if (isAndroid) { %>
+                    PDF preview tidak tersedia untuk perangkat Android. Silakan gunakan tombol "Open PDF" di bawah untuk membuka file.
+                  <% } else { %>
+                    Untuk pengalaman yang lebih baik dalam membaca PDF, silahkan gunakan tombol "Open PDF" di bawah.
+                  <% } %>
                 </div>
               </div>
             <% } %>

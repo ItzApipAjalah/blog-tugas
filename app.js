@@ -77,7 +77,10 @@ app.get('/blog/:slug', async (req, res) => {
       return res.redirect('/');
     }
 
-    res.render('blog', { blog });
+    res.render('blog', { 
+      blog,
+      userAgent: req.headers['user-agent'] // Add this line
+    });
   } catch (err) {
     console.error('Server error:', err);
     res.redirect('/');
