@@ -4,6 +4,10 @@
   <title><%= blog ? blog.title : 'Blog Not Found' %></title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  </script>
 </head>
 <body class="bg-gray-50">
   <div class="max-w-4xl mx-auto px-4 py-8">
@@ -37,22 +41,120 @@
                 >
               </div>
             <% } else if (isPDF) { %>
-              <!-- PDF Preview -->
+              <!-- PDF Preview with PDF.js -->
               <div class="mb-4 w-full">
-                <div class="relative w-full overflow-hidden" style="padding-top: 141.4%;">
-                  <iframe 
-                    src="<%= fileUrl %>"
-                    type="application/pdf"
-                    class="absolute top-0 left-0 w-full h-full rounded-lg shadow-md"
-                    style="-webkit-overflow-scrolling: touch;"
-                    frameborder="0"
-                    allowfullscreen
-                  ></iframe>
+                <div id="pdf-container" class="bg-gray-100 rounded-lg shadow-md overflow-hidden">
+                  <div id="pdf-controls" class="bg-gray-800 text-white p-3 flex items-center justify-between flex-wrap gap-2">
+                    <div class="flex items-center gap-2">
+                      <button id="prev-page" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                        ← Prev
+                      </button>
+                      <span id="page-info" class="text-sm">Page 1 of 1</span>
+                      <button id="next-page" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                        Next →
+                      </button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <button id="zoom-out" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm">−</button>
+                      <span id="zoom-level" class="text-sm">100%</span>
+                      <button id="zoom-in" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm">+</button>
+                    </div>
+                  </div>
+                  <div id="pdf-viewer" class="overflow-auto bg-gray-100" style="max-height: 600px;">
+                    <canvas id="pdf-canvas" class="mx-auto"></canvas>
+                  </div>
+                  <div id="pdf-loading" class="text-center py-8 text-gray-600">
+                    Loading PDF...
+                  </div>
                 </div>
                 <div class="mt-4 text-sm text-gray-500">
                   Untuk pengalaman yang lebih baik dalam membaca PDF, silahkan gunakan tombol "Open PDF" di bawah.
                 </div>
               </div>
+
+              <script>
+                (function() {
+                  const pdfUrl = '<%= fileUrl %>';
+                  let pdfDoc = null;
+                  let pageNum = 1;
+                  let pageRendering = false;
+                  let pageNumPending = null;
+                  let scale = 1.5;
+                  
+                  const canvas = document.getElementById('pdf-canvas');
+                  const ctx = canvas.getContext('2d');
+                  const loadingDiv = document.getElementById('pdf-loading');
+                  
+                  function renderPage(num) {
+                    pageRendering = true;
+                    pdfDoc.getPage(num).then(function(page) {
+                      const viewport = page.getViewport({scale: scale});
+                      canvas.height = viewport.height;
+                      canvas.width = viewport.width;
+                      
+                      const renderContext = {
+                        canvasContext: ctx,
+                        viewport: viewport
+                      };
+                      
+                      const renderTask = page.render(renderContext);
+                      renderTask.promise.then(function() {
+                        pageRendering = false;
+                        if (pageNumPending !== null) {
+                          renderPage(pageNumPending);
+                          pageNumPending = null;
+                        }
+                      });
+                    });
+                    
+                    document.getElementById('page-info').textContent = 'Page ' + num + ' of ' + pdfDoc.numPages;
+                    document.getElementById('prev-page').disabled = (num <= 1);
+                    document.getElementById('next-page').disabled = (num >= pdfDoc.numPages);
+                  }
+                  
+                  function queueRenderPage(num) {
+                    if (pageRendering) {
+                      pageNumPending = num;
+                    } else {
+                      renderPage(num);
+                    }
+                  }
+                  
+                  function onPrevPage() {
+                    if (pageNum <= 1) return;
+                    pageNum--;
+                    queueRenderPage(pageNum);
+                  }
+                  
+                  function onNextPage() {
+                    if (pageNum >= pdfDoc.numPages) return;
+                    pageNum++;
+                    queueRenderPage(pageNum);
+                  }
+                  
+                  function updateZoom(delta) {
+                    scale += delta;
+                    scale = Math.max(0.5, Math.min(3, scale));
+                    document.getElementById('zoom-level').textContent = Math.round(scale * 100) + '%';
+                    queueRenderPage(pageNum);
+                  }
+                  
+                  document.getElementById('prev-page').addEventListener('click', onPrevPage);
+                  document.getElementById('next-page').addEventListener('click', onNextPage);
+                  document.getElementById('zoom-in').addEventListener('click', () => updateZoom(0.25));
+                  document.getElementById('zoom-out').addEventListener('click', () => updateZoom(-0.25));
+                  
+                  pdfjsLib.getDocument(pdfUrl).promise.then(function(pdfDoc_) {
+                    pdfDoc = pdfDoc_;
+                    loadingDiv.style.display = 'none';
+                    canvas.style.display = 'block';
+                    renderPage(pageNum);
+                  }).catch(function(error) {
+                    loadingDiv.textContent = 'Error loading PDF: ' + error.message;
+                    console.error('Error loading PDF:', error);
+                  });
+                })();
+              </script>
             <% } %>
 
             <!-- Download Button (always show for accessibility) -->
